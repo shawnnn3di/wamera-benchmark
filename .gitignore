@@ -1,0 +1,8 @@
+annotate/maskrcnn/configs/*
+annotate/*.pk
+__pycache__
+tensorboard
+darktest
+*.checkpoint
+*.txt
+*.pk

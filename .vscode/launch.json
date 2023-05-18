@@ -1,0 +1,40 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: trainer",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/lscsc/caizhijie/0420-wamera-benchmark/src/trainer.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: normal_trainer",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/lscsc/caizhijie/0420-wamera-benchmark/src_normal/trainer.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: formal_trainer",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/lscsc/caizhijie/0420-wamera-benchmark/formal/trainer.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: thisfile",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+    ]
+}
