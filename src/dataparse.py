@@ -6,8 +6,11 @@ import torch
 
 
 class fastdataset(Dataset):
-    def __init__(self, pkpath):
+    def __init__(self, pkpath, ratio=1):
         self.annotate = pk.load(open(pkpath, 'rb'))
+        if ratio < 1:
+            print(ratio)
+            self.annotate = self.annotate.iloc[:int(len(self.annotate) * ratio)]
         self.black = np.zeros((512, 512, 3), dtype=np.int8) - 0.5
         
     def __getitem__(self, index):
@@ -48,11 +51,11 @@ def collate_fn(batch):
     return dict(zip(['jhm', 'paf', 'box', 'sm', 'csi', 'img'], [jhm, aff, box, mask, csi, pic]))
     
     
-def build_loader(args, validonly=False):
+def build_loader(args, validonly=False, ratio=1):
     train_loader = None
     if not validonly:
         traindf = '%s_train.pk' % args.prefix
-        trainset = fastdataset(traindf)
+        trainset = fastdataset(traindf, ratio)
         train_loader = DataLoader(
             trainset,
             batch_size=args.batchsize,
@@ -63,7 +66,7 @@ def build_loader(args, validonly=False):
         )
         
     validdf = '%s_valid.pk' % args.prefix
-    validset = fastdataset(validdf)
+    validset = fastdataset(validdf, ratio)
     valid_loader = DataLoader(
         validset,
         batch_size=args.batchsize,

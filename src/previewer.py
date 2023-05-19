@@ -9,7 +9,11 @@ from openpose import util
 
 def previewbatch(imgbatch, real, fake, box=None, n=32):
 
-    fake = [_.detach().float().cpu().numpy() for _ in fake]
+    try:
+        fake = [_.detach().float().cpu().numpy() for _ in fake]
+    except AttributeError:
+        pass
+    
     ret = list()
     pcks = np.zeros((1, 20))
     

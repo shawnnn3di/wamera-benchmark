@@ -23,4 +23,6 @@ def include_args(parser: argparse.ArgumentParser):
     
     parser.add_argument('--prefix',         default='annotate/annotate', type=str)
     
+    parser.add_argument('--checkpoint',     default='/home/lscsc/caizhijie/0420-wamera-benchmark/pipeline_0518test_80.checkpoint', type=str)
+    
     return parser
