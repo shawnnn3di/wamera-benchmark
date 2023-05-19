@@ -1,5 +1,6 @@
 import argparse
 import numpy as np
+import pickle as pk
 import tensorboardX
 import torch
 import tqdm
@@ -81,8 +82,14 @@ if __name__ == '__main__':
             if i % args.preview_gap == 0:
                 wtils.writer_preview(writer, colors, jhm, sm, y_jhm, y_sm, j)
             pbar.set_description('%s, epoch: %d/%d, batch: %d/%d, loss: %.4f' % ('train', j, args.num_epoch, i, lenpbar, loss))
+        
+        wtils.writer_epochwrap(writer, loss_recorder, pcks_recorder, j, 'train')
 
         # checkpoint
         if j % args.checkpoint_gap == 0:
             utils.checkpoint(j, model, args)
+            
+    # final dump
+    if args.dump_loss_gap > 0:
+        pk.dump(dump, open('./tensorboard/%s' % args.comment + 'dump.pk', 'wb'))
     

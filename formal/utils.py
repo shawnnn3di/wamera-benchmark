@@ -58,4 +58,4 @@ class recorder_vector(object): # save the object value
         
 
 def checkpoint(j, model, args):
-    torch.save(model, '%s_%s_%d.checkpoint' % (args.style, args.comment, j))
+    torch.save(model, './tensorboard/%s/%s_%d.checkpoint' % (args.comment, args.style, j))
