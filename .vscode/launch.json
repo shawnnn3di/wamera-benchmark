@@ -5,28 +5,23 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: trainer",
+            "name": "train",
             "type": "python",
             "request": "launch",
-            "program": "/home/lscsc/caizhijie/0420-wamera-benchmark/src/trainer.py",
+            "program": "/home/lscsc/caizhijie/0420-wamera-benchmark/src/train.py",
             "console": "integratedTerminal",
             "justMyCode": true
         },
         {
-            "name": "Python: normal_trainer",
+            "name": "valid",
             "type": "python",
             "request": "launch",
-            "program": "/home/lscsc/caizhijie/0420-wamera-benchmark/src_normal/trainer.py",
+            "program": "/home/lscsc/caizhijie/0420-wamera-benchmark/src/valid.py",
             "console": "integratedTerminal",
-            "justMyCode": true
-        },
-        {
-            "name": "Python: formal_trainer",
-            "type": "python",
-            "request": "launch",
-            "program": "/home/lscsc/caizhijie/0420-wamera-benchmark/formal/trainer.py",
-            "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": true,
+            "args": [
+                "--gpuid", "1",
+            ]
         },
         {
             "name": "Python: thisfile",

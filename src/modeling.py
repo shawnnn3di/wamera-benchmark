@@ -192,28 +192,33 @@ def forward_pipeline(batch, device, model, half):
     return loss_sm, loss_jhm, loss_paf, sm, jhm, paf, y_sm, y_jhm, y_paf, batch['img'], batch['box']
 
 
-def build_model(args, device):
+def build_model(args, device, checkpoint=None):
     if args.style == 'pipeline':
-        preprocessor = preprocess_deconv(120, 32).to(device)
-        student_jhm = unet(32, 19).to(device)
-        student_paf = unet(32, 38).to(device)
+        if checkpoint == None:
+            print('initializing new model..')
+            preprocessor = preprocess_deconv(120, 32).to(device)
+            student_jhm = unet(32, 19).to(device)
+            student_paf = unet(32, 38).to(device)
         
+        else:
+            print('loading checkpoint from %s' % checkpoint)
+            [preprocessor, student_jhm, student_paf] = [_.to(device) for _ in torch.load(checkpoint)]
+            
+        model = [preprocessor, student_jhm, student_paf]
         optimizer = Adam(
-            [
-                {'params': preprocessor.parameters()},
-                {'params': student_jhm.parameters()},
-                {'params': student_paf.parameters()},
-            ],
-            lr=args.lr,
-            weight_decay=args.weight_decay,
-        )
-        
+                [
+                    {'params': preprocessor.parameters()},
+                    {'params': student_jhm.parameters()},
+                    {'params': student_paf.parameters()},
+                ],
+                lr=args.lr,
+                weight_decay=args.weight_decay,
+            )
+            
         scheduler = lr_scheduler.ExponentialLR(
             optimizer=optimizer, 
             gamma=args.lr_gamma,
         )
-        
-        model = [preprocessor, student_jhm, student_paf]
         forward = forward_pipeline
         
-        return model, optimizer, scheduler, forward
+    return model, optimizer, scheduler, forward

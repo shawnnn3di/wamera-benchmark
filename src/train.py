@@ -60,8 +60,8 @@ if __name__ == '__main__':
                     
                     if i % args.preview_gap == 0:
                         wtils.writer_preview(writer, colors, jhm, sm, y_jhm, y_sm, j, 'valid')
-                        img_batch, pcks = previewer.previewbatch(img, utils.cpunumpy([y_jhm, y_paf]), (jhm, paf), box)
-                        pcks_recorder.update(pcks)
+                        img_batch, pcks, n = previewer.previewbatch(img, utils.cpunumpy([y_jhm, y_paf]), (jhm, paf), box)
+                        pcks_recorder.update(pcks, n)
                     pbar.set_description('%s, epoch: %d/%d, batch: %d/%d, loss: %.4f' % ('valid', j, args.num_epoch, i, lenpbar, loss))
                 
             wtils.writer_epochwrap(writer, loss_recorder, pcks_recorder, j, 'valid')

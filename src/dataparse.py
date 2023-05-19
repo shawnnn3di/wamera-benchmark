@@ -48,21 +48,22 @@ def collate_fn(batch):
     return dict(zip(['jhm', 'paf', 'box', 'sm', 'csi', 'img'], [jhm, aff, box, mask, csi, pic]))
     
     
-def build_loader(args):
-    traindf = '%s_train.pk' % args.prefix
+def build_loader(args, validonly=False):
+    train_loader = None
+    if not validonly:
+        traindf = '%s_train.pk' % args.prefix
+        trainset = fastdataset(traindf)
+        train_loader = DataLoader(
+            trainset,
+            batch_size=args.batchsize,
+            shuffle=args.shuffle_train,
+            num_workers=args.num_workers,
+            collate_fn=collate_fn,
+            pin_memory=True,
+        )
+        
     validdf = '%s_valid.pk' % args.prefix
-    
-    trainset = fastdataset(traindf)
     validset = fastdataset(validdf)
-    
-    train_loader = DataLoader(
-        trainset,
-        batch_size=args.batchsize,
-        shuffle=args.shuffle_train,
-        num_workers=args.num_workers,
-        collate_fn=collate_fn,
-        pin_memory=True,
-    )
     valid_loader = DataLoader(
         validset,
         batch_size=args.batchsize,
