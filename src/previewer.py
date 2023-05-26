@@ -33,7 +33,7 @@ def previewbatch(imgbatch, real, fake, box=None, n=32):
         canvas = util.draw_bodypose(np.ascontiguousarray(canvas.transpose(1, 2, 0)), candidate_f, subset_f)
         ret.append(canvas)
         
-        return ret
+        return ret, candidate_f, candidate_r, subset_f, subset_r
         
     pool = Pool()
     results = pool.map(subprocess, range(n_))
@@ -41,11 +41,11 @@ def previewbatch(imgbatch, real, fake, box=None, n=32):
     
     ret = list()
     for i in results:
-        ret.extend(i)
+        ret.extend(i[0])
 
     # for i in range(n_):
     #     if box is not None:
-    #         pcks += pck(subset_r[i], subset_f[i], candidate_r[i], candidate_f[i], box[i])
+    #         pcks += pck(results[i][4], results[i][2], results[i][2], results[i][1], box[i])
 
     return np.stack(ret)[:, :, :, [2, 1, 0]], pcks / n if box is not None else None, min(n, len(imgbatch))
 

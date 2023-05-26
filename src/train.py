@@ -53,7 +53,9 @@ if __name__ == '__main__':
                 pbar = tqdm.tqdm(enumerate(valid_loader), total=len(valid_loader))
                 lenpbar = len(pbar)
                 for i, batch in pbar:
-                    
+                    '''
+                    specify valid behaviors here
+                    '''
                     loss_sm, loss_jhm, loss_paf, sm, jhm, paf, y_sm, y_jhm, y_paf, img, box = forward(batch, device, model, args.half)
                     loss = loss_sm + loss_jhm + loss_paf
                     loss_recorder.update(np.array(utils.cpunumpy([loss, loss_sm, loss_jhm, loss_paf])), sm.shape[0])
@@ -73,6 +75,9 @@ if __name__ == '__main__':
         pbar = tqdm.tqdm(enumerate(train_loader), total=len(train_loader))
         lenpbar = len(pbar)
         for i, batch in pbar:
+            '''
+            specify train behaviors here
+            '''
             loss_sm, loss_jhm, loss_paf, sm, jhm, paf, y_sm, y_jhm, y_paf, img, box = forward(batch, device, model, args.half)
             loss = loss_sm + loss_jhm + loss_paf
             loss_recorder.update(np.array(utils.cpunumpy([loss, loss_sm, loss_jhm, loss_paf])), sm.shape[0])
