@@ -1,27 +1,27 @@
 # %%
-# 
-rootdir = '/home/lscsc/caizhijie/0420-wamera-benchmark/data/pic'
+# %%
+rootdir = '/home/lscsc/caizhijie/shar-data/archive'
 
-# 
+# %%
 import glob
-jpgs = glob.glob('%s/*/*.jpg' % rootdir)
+jpgs = glob.glob('%s/*/*/*.jpg' % rootdir)
+pks = glob.glob('%s/*/*/*.pk_2_1' % rootdir)
 
 import pandas as pd
 import pickle as pk
 
 df_jpgs = pd.DataFrame.from_dict({'jpg': jpgs})
+df_jpgs['subdir'] = df_jpgs['jpg'].apply(lambda x: x.split('/')[-2])
+df_jpgs['dir'] = df_jpgs['jpg'].apply(lambda x: x.split('/')[-3])
+df_jpgs = df_jpgs[df_jpgs['subdir'].apply(lambda x: x[0] == 't')]
 
-df_jpgs['env'] = df_jpgs['jpg'].apply(lambda x: x.split('_')[0][-1])
-df_jpgs['subj'] = df_jpgs['jpg'].apply(lambda x: x.split('_')[1][-1])
-df_jpgs['group'] = df_jpgs['jpg'].apply(lambda x: x.split('_')[2][-1])
-df_jpgs['angle'] = df_jpgs['jpg'].apply(lambda x: x.split('_')[3][-1])
-df_jpgs['cam'] = df_jpgs['jpg'].apply(lambda x: x.split('_')[4][-1])
-df_jpgs['t'] = df_jpgs['jpg'].apply(lambda x: x.split('_')[5][-1])
+df_jpgs['mov'] = df_jpgs['dir'].apply(lambda x: x.split('_')[2])
+df_jpgs['obj'] = df_jpgs['dir'].apply(lambda x: x.split('_')[3])
+df_jpgs['ang'] = df_jpgs['dir'].apply(lambda x: x.split('_')[4])
+df_jpgs['rep'] = df_jpgs['subdir'].apply(lambda x: x.split('_')[0].split('t')[-1])
 
-# %%
-df_jpgs
 
-# %%
+
 # %%
 # df_jpgs
 
@@ -104,28 +104,23 @@ class packPredictor(DefaultPredictor):
             return predictions
 
 # %%
-openpose_dstrootdir = '/home/lscsc/caizhijie/0420-wamera-benchmark/data/openpose/'
+# %%
+openpose_dstrootdir = '/home/lscsc/caizhijie/archive_0118/maskrcnn/'
 
 import os
-import torch.nn.functional as F
 
 for k in range(4):
-    dataset = _dataset(df_jpgs[k * 80000:(k + 1) * 80000])
+    dataset = _dataset(df_jpgs[k * 20000:(k + 1) * 20000])
     inference_loader = DataLoader(dataset, 32, shuffle=False, collate_fn=collate_fn, num_workers=8, pin_memory=True)
     ppredictor = packPredictor(cfg)
     
     outputlist = list()
     namelist = list()
     for i, batch in tqdm.tqdm(enumerate(inference_loader), total=len(inference_loader)):
-        output = ppredictor(batch[0][..., ::4, ::4])
+        output = ppredictor(batch[0])
+        outputlist.extend([_['instances'].to('cpu') for _ in output])
         
-        dump = [_['instances'].to('cpu').get_fields() for _ in output]
-
-        for j in dump:
-        #     # j['pred_masks'] = np.bool8(F.interpolate(j['pred_masks'].unsqueeze(1).float(), (54, 96)).numpy())
-            j['pred_masks'] = j['pred_masks'][:, ::5, ::5]
-        
-        outputlist.extend(dump)
+        # outputlist.extend([1 for _ in range(len(batch[0]))])
         
         namelist.extend(batch[1])
         
@@ -142,14 +137,6 @@ for k in range(4):
     print(len(outputlist))
     print(len(namelist))
     del outputlist
-    del namelist
-
-# %%
-dump = [_['instances'].to('cpu').get_fields() for _ in output]
-
-import torch.nn.functional as F
-for j in dump:
-    j['pred_masks'] = F.interpolate(j['pred_masks'].unsqueeze(1).float(), scale_factor=0.05)
 
 # %%
 

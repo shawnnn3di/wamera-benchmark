@@ -1,5 +1,5 @@
-annotate/maskrcnn/configs/*
-annotate/*.pk
+annotate_legacy/maskrcnn/configs/*
+annotate_legacy/*.pk
 __pycache__
 tensorboard
 darktest
@@ -7,3 +7,8 @@ darktest
 *.txt
 *.pk
 *.mp4
+data/2023*
+data/csi
+data/pic
+data/data_copy/2023*
+data/openpose
