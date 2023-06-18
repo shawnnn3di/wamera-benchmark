@@ -73,7 +73,7 @@ def collate_fn(batch):
     paths = [_['jpg'] for _ in batch]
     return np.stack(imgs), paths
 
-inference_dataset = _dataset(df_jpgs)
+inference_dataset = _dataset(df_jpgs.sort_values('jpg', ignore_index=True))
 inference_loader = DataLoader(inference_dataset, 128, shuffle=False, collate_fn=collate_fn)
 
 print(len(inference_dataset))
@@ -109,16 +109,18 @@ import pandas as pd
 # %%
 import tqdm
 import torch.nn.functional as F
-kptlist = list()
-afflist = list()
-namelist = list()
-
 batch1 = None
 
-for k in range(4):
+openpose_dstrootdir = '/home/lscsc/caizhijie/0420-wamera-benchmark/data/openpose/'
+
+for k in range(0, 60):
+    kptlist = list()
+    afflist = list()
+    namelist = list()
+
     # dataset = _dataset(df_jpgs[k * 80000:(k + 1) * 80000])
-    inference_dataset = _dataset(df_jpgs[k * 80000:(k + 1) * 80000])
-    inference_loader = DataLoader(inference_dataset, 128, shuffle=False, collate_fn=collate_fn)
+    inference_dataset = _dataset(df_jpgs[k * 5000:(k + 1) * 5000])
+    inference_loader = DataLoader(inference_dataset, 128, shuffle=False, num_workers=12, collate_fn=collate_fn, drop_last=False)
 
 
     for i, batch in tqdm.tqdm(enumerate(inference_loader), total=len(inference_loader)):
@@ -128,12 +130,12 @@ for k in range(4):
         kptlist.extend(kpt.detach().cpu().numpy())
         afflist.extend(aff.detach().cpu().numpy())
         namelist.extend(batch[1])
-        batch1 = batch
-
-    # # %%
-    openpose_dstrootdir = '/home/lscsc/caizhijie/0420-wamera-benchmark/data/openpose/'
+        # batch1 = batch
+        # pk.dump([kpt.detach().cpu().numpy(), aff.detach().cpu().numpy(), batch[1]], open(openpose_dstrootdir + '%d_%d_batch.pk' % (k,i), 'wb'))
+        
+    # pk.dump([kptlist, afflist, namelist], open(openpose_dstrootdir + '%d.pk' % k, 'wb'))
     import os
-
+    
     for i in tqdm.trange(len(namelist)):
         try:
             pk.dump({'aff':afflist[i], 'kpt':kptlist[i]}, open(openpose_dstrootdir + ('/'.join(namelist[i].split('/')[-3:])[:-4] + '.pk'), 'wb'))
@@ -142,6 +144,9 @@ for k in range(4):
                 os.mkdir(openpose_dstrootdir + '/'.join(namelist[i].split('/')[-3:-2]))
             if not os.path.exists(openpose_dstrootdir + '/'.join(namelist[i].split('/')[-3:-1])):
                 os.mkdir(openpose_dstrootdir + '/'.join(namelist[i].split('/')[-3:-1]))
+            pk.dump({'aff':afflist[i], 'kpt':kptlist[i]}, open(openpose_dstrootdir + ('/'.join(namelist[i].split('/')[-3:])[:-4] + '.pk'), 'wb'))
+    
+    del kptlist, afflist, namelist
 
 # %%
 

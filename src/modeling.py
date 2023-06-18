@@ -20,32 +20,33 @@ class preprocess_deconv(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
         
-        # 32x in size
+        # 1x in size
         self.preprocess = nn.Sequential(
-            nn.ConvTranspose2d(in_channels, in_channels, 3, 2, 1, 1),
-            nn.BatchNorm2d(120),
+            nn.ConvTranspose2d(in_channels, in_channels, 3, 1, 1),
+            nn.BatchNorm2d(in_channels),
             nn.ReLU(),
-            nn.ConvTranspose2d(in_channels, in_channels, 3, 2, 1, 1),
-            nn.BatchNorm2d(120),
+            nn.ConvTranspose2d(in_channels, in_channels, 3, 1, 1),
+            nn.BatchNorm2d(in_channels),
             nn.ReLU(),
-            nn.ConvTranspose2d(in_channels, in_channels, 3, 2, 1, 1),
-            nn.BatchNorm2d(120),
+            nn.ConvTranspose2d(in_channels, in_channels, 3, 1, 1),
+            nn.BatchNorm2d(in_channels),
             nn.ReLU(),
-            nn.ConvTranspose2d(in_channels, in_channels, 3, 2, 1, 1),
-            nn.BatchNorm2d(120),
+            nn.ConvTranspose2d(in_channels, in_channels, 3, 1, 1),
+            nn.BatchNorm2d(in_channels),
             nn.ReLU(),
-            nn.ConvTranspose2d(in_channels, in_channels, 3, 2, 1, 1),
-            nn.BatchNorm2d(120),
+            nn.ConvTranspose2d(in_channels, in_channels, 3, 1, 1),
+            nn.BatchNorm2d(in_channels),
             nn.ReLU(),
             nn.Conv2d(in_channels, out_channels, 1),
             nn.BatchNorm2d(out_channels),
+            nn.AdaptiveAvgPool2d((128, 96)),
         )
         
         self.in_channels = in_channels
         self.out_channels = out_channels
         
     def forward(self, x):
-        x = x.reshape(x.shape[0], self.in_channels, 3, 3)
+        # x = x.reshape(x.shape[0], self.in_channels, 3, 3)
         return self.preprocess(x)
     
 
@@ -114,8 +115,8 @@ class unet(nn.Module):
         
         self.endconv = nn.Conv2d(c[0], c[0], 1)
         
-        self.resizer0 = Resize((96, 96))
-        self.resizer1 = Resize((46, 46))
+        # self.resizer0 = Resize((96, 96))
+        self.resizer1 = Resize((54, 96))
         
         self.postprocess_0 = nn.Sequential(
             nn.Conv2d(32, 32, 1, 1),
@@ -177,15 +178,17 @@ def forward_pipeline(batch, device, model, half):
     y_jhm = torch.tensor(batch['jhm']).to(device)
     y_paf = torch.tensor(batch['paf']).to(device)
     if not half:
+        x = x.float()
         y_sm = y_sm.float()
         y_jhm = torch.tensor(batch['jhm']).to(device).float()
         y_paf = torch.tensor(batch['paf']).to(device).float()
     x = model[0](x)
     jhm = model[1](x)
     paf = model[2](x)
-    sm = jhm[:, :-1, ...].sum(1)
+    sm = jhm[:, :18, ...].sum(1)
     
-    loss_sm = ((sm - y_sm) ** 2 * (1 + y_sm.abs())).sum() * 0.1
+    # loss_sm = ((sm - y_sm) ** 2 * (1 + y_sm.abs())).sum() * 0.1
+    loss_sm = torch.tensor(0.0).to(device)
     loss_jhm = ((jhm - y_jhm) ** 2 * (1 + y_jhm.abs())).sum()    
     loss_paf = ((paf - y_paf) ** 2 * (0.3 + y_paf.abs())).sum()
     
@@ -196,9 +199,9 @@ def build_model(args, device, checkpoint=None):
     if args.style == 'pipeline':
         if checkpoint == None:
             print('initializing new model..')
-            preprocessor = preprocess_deconv(120, 32).to(device)
-            student_jhm = unet(32, 19).to(device)
-            student_paf = unet(32, 38).to(device)
+            preprocessor = preprocess_deconv(3, 32).to(device)
+            student_jhm = unet(32, 19 * 4).to(device)
+            student_paf = unet(32, 38 * 4).to(device)
         
         else:
             print('loading checkpoint from %s' % checkpoint)

@@ -7,7 +7,7 @@ from multiprocess import Pool
 
 from openpose import util
 
-def previewbatch(imgbatch, real, fake, box=None, n=32):
+def previewbatch(imgbatch, real, fake, box=None, n=16):
 
     try:
         fake = [_.detach().float().cpu().numpy() for _ in fake]
@@ -18,7 +18,8 @@ def previewbatch(imgbatch, real, fake, box=None, n=32):
     pcks = np.zeros((1, 20))
     
     n_ = min(n, len(real[0]))
-    
+    # 
+    results = list()
     # for i in range(min(n, len(imgbatch))):
     def subprocess(i):
         canvas = imgbatch[i] * 255 + 127
@@ -33,6 +34,8 @@ def previewbatch(imgbatch, real, fake, box=None, n=32):
         canvas = util.draw_bodypose(np.ascontiguousarray(canvas.transpose(1, 2, 0)), candidate_f, subset_f)
         ret.append(canvas)
         
+        # results.append([ret, candidate_f, candidate_r, subset_f, subset_r])
+        
         return ret, candidate_f, candidate_r, subset_f, subset_r
         
     pool = Pool()
@@ -43,38 +46,65 @@ def previewbatch(imgbatch, real, fake, box=None, n=32):
     for i in results:
         ret.extend(i[0])
 
-    # for i in range(n_):
-    #     if box is not None:
-    #         pcks += pck(results[i][4], results[i][2], results[i][2], results[i][1], box[i])
+    for i in range(n_):
+        if box is not None:
+            pcks += pck(results[i][4], results[i][3], results[i][2], results[i][1], box=None)
 
     return np.stack(ret)[:, :, :, [2, 1, 0]], pcks / n if box is not None else None, min(n, len(imgbatch))
 
-def pck(subset_real, subset_fake, candidate_real, candidate_fake, box, orisize=512, bars=[_ / 20 for _ in range(20)]):
+
+def pck(subset_real, subset_fake, candidate_real, candidate_fake, box=None, orisize=512, bars=[_ / 20 for _ in range(20)]):
 
     num_gt = subset_real[0][-1]
-
-    dis = list()
+    
+    dis = [1.01]
+    normer = 1
     if len(subset_fake) > 0:
+        dis = list()
+        gtxlist = list()
+        gtylist = list()
+    
         for i in range(17):
             if (subset_real[0][i] != -1) & (subset_fake[0][i] != -1):
-                gt = candidate_real[int(subset_real[0][i])][:2] / 368
-                pd = candidate_fake[int(subset_fake[0][i])][:2] / 368
+                # gt = candidate_real[int(subset_real[0][i])][:2] / 368
+                # pd = candidate_fake[int(subset_fake[0][i])][:2] / 368
                 
-                box_normed = box[0] / 512
-                normer = np.sqrt((box_normed[2] - box_normed[0]) ** 2 + (box_normed[3] - box_normed[1]) ** 2)
-                dis.append(np.sqrt(np.sum((gt - pd) ** 2)) / normer)
+                gtx = candidate_real[int(subset_real[0][i])][0] / 960
+                gty = candidate_real[int(subset_real[0][i])][1] / 540
+
+                pdx = candidate_fake[int(subset_fake[0][i])][0] / 960
+                pdy = candidate_fake[int(subset_fake[0][i])][1] / 540
+                
+                dis.append(((gtx - pdx) ** 2 + (gty - pdy) ** 2) ** 2)
+                
+                gtxlist.append(gtx)
+                gtylist.append(gty)
+                
+                # box_normed = box[0] / 512
+                # normer = np.sqrt((box_normed[2] - box_normed[0]) ** 2 + (box_normed[3] - box_normed[1]) ** 2)
+                # dis.append(np.sqrt(np.sum((gt - pd) ** 2)) / normer)
+            if len(gtxlist) > 0:    
+                normer = ((max(gtxlist) - min(gtxlist)) ** 2 + (max(gtylist) - min(gtylist)) ** 2) ** 0.5
+            else:
+                normer = 1
                     
-    scores = np.sum(np.array([dis]) < (1 - np.array([bars])).T, axis=1) / num_gt
+    scores = np.sum(np.array([dis]) / normer < (1 - np.array([bars])).T, axis=1) / num_gt
     return scores.squeeze()
 
+
 def _preview(oriImg, Mconv7_stage6_L1, Mconv7_stage6_L2):
+    oriImg = np.zeros((3, 960, 540))
     scale_search = [1.]
     scale = 1.
-    boxsize = 368
+    # boxsize = 368
+    boxsize = 512
     stride = 8
     padValue = 128
     thre1 = 0.1
     thre2 = 0.005
+    
+    x = 960
+    y = 540
     
     Mconv7_stage6_L1 = np.array(Mconv7_stage6_L1, dtype=float)
     Mconv7_stage6_L2 = np.array(Mconv7_stage6_L2, dtype=float)
@@ -82,8 +112,10 @@ def _preview(oriImg, Mconv7_stage6_L1, Mconv7_stage6_L2):
     oriImg = np.ascontiguousarray(oriImg).transpose(1, 2, 0)
 
     multiplier = [x * boxsize / oriImg.shape[1] for x in scale_search]
-    heatmap_avg = np.zeros((oriImg.shape[1], oriImg.shape[0], 19))
-    paf_avg = np.zeros((oriImg.shape[1], oriImg.shape[0], 38))
+    heatmap_avg = np.zeros((y, x, 19))
+    paf_avg = np.zeros((y, x, 38))
+    # heatmap_avg = np.zeros((oriImg.shape[1], oriImg.shape[0], 19))
+    # paf_avg = np.zeros((oriImg.shape[1], oriImg.shape[0], 38))
 
     imageToTest = cv2.resize(oriImg, (0, 0), fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
     imageToTest_padded, pad = util.padRightDownCorner(imageToTest, stride, padValue)

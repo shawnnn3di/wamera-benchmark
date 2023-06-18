@@ -104,7 +104,7 @@ class packPredictor(DefaultPredictor):
             return predictions
 
 # %%
-openpose_dstrootdir = '/home/lscsc/caizhijie/0420-wamera-benchmark/data/openpose/'
+maskrcnn_dstrootdir = '/home/lscsc/caizhijie/0420-wamera-benchmark/data/maskrcnn/'
 
 import os
 import torch.nn.functional as F
@@ -122,8 +122,8 @@ for k in range(4):
         dump = [_['instances'].to('cpu').get_fields() for _ in output]
 
         for j in dump:
-        #     # j['pred_masks'] = np.bool8(F.interpolate(j['pred_masks'].unsqueeze(1).float(), (54, 96)).numpy())
-            j['pred_masks'] = j['pred_masks'][:, ::5, ::5]
+            j['pred_masks'] = np.uint8(F.interpolate(j['pred_masks'].unsqueeze(1).float(), (54, 96)).numpy())
+            # j['pred_masks'] = j['pred_masks'][:, ::5, ::5]
         
         outputlist.extend(dump)
         
@@ -131,13 +131,13 @@ for k in range(4):
         
     for i in tqdm.trange(len(namelist)):
         try:
-            pk.dump(outputlist[i], open(openpose_dstrootdir + ('/'.join(namelist[i].split('/')[-3:])[:-4] + '.pk'), 'wb'))
+            pk.dump(outputlist[i], open(maskrcnn_dstrootdir + ('/'.join(namelist[i].split('/')[-3:])[:-4] + '.pk'), 'wb'))
         except FileNotFoundError:
-            if not os.path.exists(openpose_dstrootdir + '/'.join(namelist[i].split('/')[-3:-2])):
-                os.mkdir(openpose_dstrootdir + '/'.join(namelist[i].split('/')[-3:-2]))
-            if not os.path.exists(openpose_dstrootdir + '/'.join(namelist[i].split('/')[-3:-1])):
-                os.mkdir(openpose_dstrootdir + '/'.join(namelist[i].split('/')[-3:-1]))
-            pk.dump(outputlist[i], open(openpose_dstrootdir + ('/'.join(namelist[i].split('/')[-3:])[:-4] + '.pk'), 'wb'))
+            if not os.path.exists(maskrcnn_dstrootdir + '/'.join(namelist[i].split('/')[-3:-2])):
+                os.mkdir(maskrcnn_dstrootdir + '/'.join(namelist[i].split('/')[-3:-2]))
+            if not os.path.exists(maskrcnn_dstrootdir + '/'.join(namelist[i].split('/')[-3:-1])):
+                os.mkdir(maskrcnn_dstrootdir + '/'.join(namelist[i].split('/')[-3:-1]))
+            pk.dump(outputlist[i], open(maskrcnn_dstrootdir + ('/'.join(namelist[i].split('/')[-3:])[:-4] + '.pk'), 'wb'))
     
     print(len(outputlist))
     print(len(namelist))
@@ -145,13 +145,13 @@ for k in range(4):
     del namelist
 
 # %%
-dump = [_['instances'].to('cpu').get_fields() for _ in output]
+# dump = [_['instances'].to('cpu').get_fields() for _ in output]
 
-import torch.nn.functional as F
-for j in dump:
-    j['pred_masks'] = F.interpolate(j['pred_masks'].unsqueeze(1).float(), scale_factor=0.05)
+# import torch.nn.functional as F
+# for j in dump:
+#     j['pred_masks'] = F.interpolate(j['pred_masks'].unsqueeze(1).float(), scale_factor=0.05)
 
-# %%
+# # %%
 
 
 

@@ -60,15 +60,27 @@ if __name__ == '__main__':
                     loss = loss_sm + loss_jhm + loss_paf
                     loss_recorder.update(np.array(utils.cpunumpy([loss, loss_sm, loss_jhm, loss_paf])), sm.shape[0])
                     
-                    if i % args.preview_gap == 0:
-                        wtils.writer_preview(writer, colors, jhm, sm, y_jhm, y_sm, j, 'valid')
-                        img_batch, pcks, n = previewer.previewbatch(img, utils.cpunumpy([y_jhm, y_paf]), (jhm, paf), box)
-                        pcks_recorder.update(pcks, n)
+                    for ii in range(4):
+                        jhm_ = jhm[:, 19 * ii : 19 * (ii+1), ...]
+                        y_jhm_ = y_jhm[:, 19 * ii : 19 * (ii+1), ...]
+                        paf_ = paf[:, 38 * ii : 38 * (ii+1), ...]
+                        y_paf_ = y_paf[:, 38 * ii : 38 * (ii+1), ...]
+                        # sm_ = sm[ii, ...]
+                        # y_sm_ = sm_[ii, ...]
+                        sm_ = sm
+                        y_sm_ = y_sm
+                        if i % args.preview_gap == 0:
+                            if j > 0:
+                                # wtils.writer_preview(writer, colors, jhm_, sm_, y_jhm_, y_sm_, j, 'valid')
+                                img_batch, pcks, n = previewer.previewbatch(img, utils.cpunumpy([y_jhm_, y_paf_]), (jhm_, paf_), box)
+                                pcks_recorder.update(pcks, n)
                     pbar.set_description('%s, epoch: %d/%d, batch: %d/%d, loss: %.4f' % ('valid', j, args.num_epoch, i, lenpbar, loss))
                 
             wtils.writer_epochwrap(writer, loss_recorder, pcks_recorder, j, 'valid')
             if (args.dump_loss_gap > 0) and (j % args.dump_loss_gap == 0):
                 dump.update({j: [loss_recorder.avg(), pcks_recorder.avg()]})
+            
+            print(pcks_recorder.avg())
             
         # train
         loss_recorder = utils.recorder_vector(keys=['loss', 'loss_sm', 'loss_jhm', 'loss_paf'])
@@ -84,8 +96,8 @@ if __name__ == '__main__':
             
             backward(optimizer, loss)
             
-            if i % args.preview_gap == 0:
-                wtils.writer_preview(writer, colors, jhm, sm, y_jhm, y_sm, j)
+            # if i % args.preview_gap == 0:
+            #     wtils.writer_preview(writer, colors, jhm, sm, y_jhm, y_sm, j)
             pbar.set_description('%s, epoch: %d/%d, batch: %d/%d, loss: %.4f' % ('train', j, args.num_epoch, i, lenpbar, loss))
         
         wtils.writer_epochwrap(writer, loss_recorder, pcks_recorder, j, 'train')
